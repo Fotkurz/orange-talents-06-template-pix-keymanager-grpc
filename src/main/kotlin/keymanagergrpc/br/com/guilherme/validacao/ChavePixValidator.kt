@@ -12,7 +12,7 @@ class ChavePixValidator(val keyRepository: KeyRepository, val request: Keymanage
 
     fun validaRequest(): Boolean {
         // Verifica o tamanho da chave
-        if(!tamanhoMaximoValido(request.chave)) return false
+        if(tamanhoMaximoExcedido(request.chave)) return false
         // Verifica se já existe a chave com aquela
         if(validaSeJaExisteChaveETipo(request, responseObserver)) return false
         // Valida se a chave tem formato válido para aquele tipo específico
@@ -99,7 +99,6 @@ class ChavePixValidator(val keyRepository: KeyRepository, val request: Keymanage
         if(valor != null) return true
         return false
     }
-
     // Valida seo CPF tem formato valido
     fun cpfValido(valor: String): Boolean {
         if(notNull(valor)) {
@@ -126,8 +125,15 @@ class ChavePixValidator(val keyRepository: KeyRepository, val request: Keymanage
         return false
     }
 
-    fun tamanhoMaximoValido(valor: String): Boolean {
-        if (valor.length <= 77) return true
+    fun tamanhoMaximoExcedido(valor: String): Boolean {
+        if (valor.length > 77) {
+            responseObserver?.onError(
+                Status.INVALID_ARGUMENT
+                    .withDescription("Chave deve ter menos que 77 caracteres")
+                    .asRuntimeException())
+                return true
+        }
         return false
     }
+
 }

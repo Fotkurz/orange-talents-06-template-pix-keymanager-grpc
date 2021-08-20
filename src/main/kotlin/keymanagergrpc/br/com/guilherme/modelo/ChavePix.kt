@@ -40,7 +40,6 @@ class ChavePix(
         return this.chave
     }
 
-
 }
 
 enum class TipoConta {
