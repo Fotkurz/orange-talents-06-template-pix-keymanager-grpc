@@ -8,13 +8,57 @@ option objc_class_prefix = "HLW";
 package keymanagergrpc.br.com.guilherme;
 
 service KeymanagerService {
-  rpc send (KeymanagerRequest) returns (KeymanagerReply) {}
+//  rpc send (KeymanagerRequest) returns (KeymanagerReply) {}
+  rpc registra (KeymanagerRequest) returns (KeymanagerResponse) {}
+}
+
+// tipo de chave
+enum KeyType {
+    CPF = 0;
+    CELULAR = 1;
+    EMAIL = 2;
+    RANDOMKEY = 3;
+}
+
+// tipo de conta
+enum AccountType {
+  CONTA_CORRENTE = 0;
+  CONTA_POUPANCA = 1;
 }
 
 message KeymanagerRequest {
-  string name = 1;
+  // identificador do cliente (uuid)
+  string id = 1;
+  // definindo o tipo de chave
+  KeyType keyType = 2;
+
+  /**
+   * valor da chave
+   - Quando tipo for CPF, deve ser obrigatório e usar formato `^[0-9]{11}$` (por exemplo: `12345678901`);
+
+    - Quando tipo for telefone celular, deve ser obrigatório e usar formato `^\+[1-9][0-9]\d{1,14}$`
+    (por exemplo: `+5585988714077`);
+
+    - Quando tipo for email, deve ser obrigatório e um endereço válido;
+
+    - Quando tipo for chave aleatória, o valor da chave **não** deve ser preenchido pois o mesmo deve
+    ser gerado pelo sistema no [formato UUID]
+
+   */
+  string chave = 3;
+
+  // Tipo de conta (Conta corrente ou Conta poupança)
+  AccountType accountType = 4;
 }
 
-message KeymanagerReply {
-  string message = 1;
+message KeymanagerResponse {
+  string pixid = 1;
 }
+
+//message KeymanagerRequest {
+//  string name = 1;
+//}
+//
+//message KeymanagerReply {
+//  string message = 1;
+//}
