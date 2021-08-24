@@ -48,8 +48,9 @@ dependencies {
     testImplementation("io.micronaut:micronaut-http-client")
     testImplementation("com.h2database:h2")
     testImplementation("org.mockito:mockito-core")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
 
-
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 application {
@@ -57,6 +58,10 @@ application {
 }
 java {
     sourceCompatibility = JavaVersion.toVersion("11")
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
 
 tasks {

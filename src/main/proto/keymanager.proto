@@ -14,16 +14,18 @@ service KeymanagerService {
 
 // tipo de chave
 enum KeyType {
-    CPF = 0;
-    CELULAR = 1;
-    EMAIL = 2;
-    RANDOMKEY = 3;
+    UNKNOWN_TYPE = 0;
+    CPF = 1;
+    CELULAR = 2;
+    EMAIL = 3;
+    RANDOMKEY = 4;
 }
 
 // tipo de conta
 enum AccountType {
-  CONTA_CORRENTE = 0;
-  CONTA_POUPANCA = 1;
+  UNKNOWN_ACCOUNT = 0;
+  CONTA_CORRENTE = 1;
+  CONTA_POUPANCA = 2;
 }
 
 message KeymanagerRequest {
