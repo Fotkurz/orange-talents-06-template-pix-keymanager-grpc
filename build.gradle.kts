@@ -36,33 +36,44 @@ dependencies {
     implementation("javax.annotation:javax.annotation-api")
     implementation("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}")
-    runtimeOnly("ch.qos.logback:logback-classic")
-    runtimeOnly("org.postgresql:postgresql")
     implementation("io.micronaut:micronaut-validation")
     implementation("io.micronaut:micronaut-http-client")
-
+    runtimeOnly("ch.qos.logback:logback-classic")
+    runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
 
     // Ambiente de testes
-    testAnnotationProcessor("io.micronaut:micronaut-inject-java")
-    testImplementation("io.micronaut:micronaut-http-client")
-    testImplementation("com.h2database:h2")
-    testImplementation("org.mockito:mockito-core")
-    testImplementation("org.junit.jupiter:junit-jupiter-api")
 
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testAnnotationProcessor("io.micronaut:micronaut-inject-java")
+    testCompile ("io.micronaut.test:micronaut-test-junit5:1.1.5")
+    testCompile ("org.mockito:mockito-junit-jupiter:2.22.0")
+    testRuntime ("org.junit.jupiter:junit-jupiter-engine:5.1.0")
+
+    // http-client
+    testImplementation("io.micronaut:micronaut-http-client")
+
+    // h2
+    testImplementation("com.h2database:h2")
+
+    // mockito
+    testImplementation("org.mockito:mockito-core")
 }
 
 application {
     mainClass.set("keymanagergrpc.br.com.guilherme.ApplicationKt")
 }
+
+
 java {
     sourceCompatibility = JavaVersion.toVersion("11")
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
-}
+//tasks.named<Test>("test") {
+//    useJUnitPlatform()
+//
+//    testLogging.showStandardStreams = true
+//
+//}
 
 tasks {
     compileKotlin {

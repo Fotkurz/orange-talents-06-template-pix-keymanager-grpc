@@ -11,9 +11,9 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.annotation.MockBean
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import keymanagergrpc.br.com.guilherme.AccountType
+import keymanagergrpc.br.com.guilherme.CreateKeyRequest
+import keymanagergrpc.br.com.guilherme.CreateKeyServiceGrpc
 import keymanagergrpc.br.com.guilherme.KeyType
-import keymanagergrpc.br.com.guilherme.KeymanagerRequest
-import keymanagergrpc.br.com.guilherme.KeymanagerServiceGrpc
 import keymanagergrpc.br.com.guilherme.client.ClientItau
 import keymanagergrpc.br.com.guilherme.client.ClientResponseDto
 import keymanagergrpc.br.com.guilherme.modelo.ChavePix
@@ -31,12 +31,15 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @MicronautTest(transactional = false)
-internal class CadastraChaveEndpointTest(
-    private val grpcClient: KeymanagerServiceGrpc.KeymanagerServiceBlockingStub,
-    private var keyRepository: KeyRepository,
-) {
+internal class CadastraChaveEndpointTest() {
 
-    @field:Inject
+    @Inject
+    lateinit var grpcClient: CreateKeyServiceGrpc.CreateKeyServiceBlockingStub
+
+    @Inject
+    lateinit var keyRepository: KeyRepository
+
+    @Inject
     lateinit var clientItau: ClientItau
 
     @BeforeEach
@@ -62,7 +65,7 @@ internal class CadastraChaveEndpointTest(
             )
 
         val response = grpcClient.registra(
-            KeymanagerRequest.newBuilder()
+            CreateKeyRequest.newBuilder()
             .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
             .setAccountType(AccountType.CONTA_CORRENTE)
             .setKeyType(KeyType.CPF)
@@ -91,7 +94,7 @@ internal class CadastraChaveEndpointTest(
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             grpcClient.registra(
-                KeymanagerRequest.newBuilder()
+                CreateKeyRequest.newBuilder()
                 .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                 .setAccountType(AccountType.CONTA_CORRENTE)
                 .setKeyType(KeyType.CPF)
@@ -110,7 +113,7 @@ internal class CadastraChaveEndpointTest(
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             grpcClient.registra(
-                KeymanagerRequest.newBuilder()
+                CreateKeyRequest.newBuilder()
                 .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                 .setAccountType(AccountType.CONTA_CORRENTE)
                 .setKeyType(KeyType.CPF)
@@ -129,7 +132,7 @@ internal class CadastraChaveEndpointTest(
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             val primeiro = grpcClient.registra(
-                KeymanagerRequest.newBuilder()
+                CreateKeyRequest.newBuilder()
                 .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                 .setAccountType(AccountType.CONTA_CORRENTE)
                 .setKeyType(KeyType.CPF)
@@ -146,7 +149,7 @@ internal class CadastraChaveEndpointTest(
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             val primeiro = grpcClient.registra(
-                KeymanagerRequest.newBuilder()
+                CreateKeyRequest.newBuilder()
                 .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                 .setAccountType(AccountType.CONTA_CORRENTE)
                 .setKeyType(KeyType.CELULAR)
@@ -163,7 +166,7 @@ internal class CadastraChaveEndpointTest(
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             val primeiro = grpcClient.registra(
-                KeymanagerRequest.newBuilder()
+                CreateKeyRequest.newBuilder()
                 .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                 .setAccountType(AccountType.CONTA_CORRENTE)
                 .setKeyType(KeyType.EMAIL)
@@ -180,7 +183,7 @@ internal class CadastraChaveEndpointTest(
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             val primeiro = grpcClient.registra(
-                KeymanagerRequest.newBuilder()
+                CreateKeyRequest.newBuilder()
                 .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                 .setAccountType(AccountType.CONTA_CORRENTE)
                 .setKeyType(KeyType.RANDOMKEY)
@@ -198,7 +201,7 @@ internal class CadastraChaveEndpointTest(
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             val primeiro = grpcClient.registra(
-                KeymanagerRequest.newBuilder()
+                CreateKeyRequest.newBuilder()
                 .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                 .setKeyType(KeyType.RANDOMKEY)
                 .setChave("")
@@ -213,11 +216,11 @@ internal class CadastraChaveEndpointTest(
     @Test
     internal fun `deve falhar quando o id do cliente nao existir no itau`() {
         Mockito.`when`(clientItau.buscaContaETipo("1", "CONTA_CORRENTE"))
-            .thenThrow(HttpClientResponseException("Erro",HttpResponse.badRequest("bad request")))
+            .thenThrow(HttpClientResponseException::class.java)
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             val primeiro = grpcClient.registra(
-                KeymanagerRequest.newBuilder()
+                CreateKeyRequest.newBuilder()
                 .setId("1")
                 .setAccountType(AccountType.CONTA_CORRENTE)
                 .setKeyType(KeyType.CPF)
@@ -226,7 +229,7 @@ internal class CadastraChaveEndpointTest(
         }
 
         assertNotNull(retornaErro)
-        assertEquals(retornaErro.status.code, Status.NOT_FOUND.code)
+        assertEquals(retornaErro.status.code, Status.PERMISSION_DENIED.code)
         assertEquals(retornaErro.status.description, "ID não encontrado")
     }
 
@@ -235,7 +238,7 @@ internal class CadastraChaveEndpointTest(
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             val primeiro = grpcClient.registra(
-                KeymanagerRequest.newBuilder()
+                CreateKeyRequest.newBuilder()
                 .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                 .setAccountType(AccountType.CONTA_CORRENTE)
                 .setChave("02467781054")
@@ -253,12 +256,12 @@ internal class CadastraChaveEndpointTest(
     }
 
     @Factory
-    class Clients {
+    class RegisterClient {
         // Utilizamos nosso grpcserverchannel.name pq se usarmos o localhost:50051 vamos ter o problema de
         // O grpc sempre sobe em uma porta aleatória em ambientes de teste.
         @Singleton
-        fun blockingStub(@GrpcChannel(GrpcServerChannel.NAME) channel: ManagedChannel): KeymanagerServiceGrpc.KeymanagerServiceBlockingStub? {
-            return KeymanagerServiceGrpc.newBlockingStub(channel)
+        fun blockingStub(@GrpcChannel(GrpcServerChannel.NAME) channel: ManagedChannel): CreateKeyServiceGrpc.CreateKeyServiceBlockingStub? {
+            return CreateKeyServiceGrpc.newBlockingStub(channel)
         }
     }
 }

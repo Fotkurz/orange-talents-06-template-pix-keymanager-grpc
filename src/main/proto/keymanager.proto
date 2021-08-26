@@ -5,11 +5,21 @@ option java_package = "keymanagergrpc.br.com.guilherme";
 option java_outer_classname = "Keymanager";
 option objc_class_prefix = "HLW";
 
+import "google/protobuf/empty.proto";
+
 package keymanagergrpc.br.com.guilherme;
 
-service KeymanagerService {
-//  rpc send (KeymanagerRequest) returns (KeymanagerReply) {}
-  rpc registra (KeymanagerRequest) returns (KeymanagerResponse) {}
+
+
+service CreateKeyService {
+  rpc registra (CreateKeyRequest) returns (CreateKeyResponse) {}
+
+
+}
+
+service ExcludeKeyService {
+
+  rpc exclui (ExcludeKeyRequest) returns (google.protobuf.Empty) {}
 }
 
 // tipo de chave
@@ -28,7 +38,7 @@ enum AccountType {
   CONTA_POUPANCA = 2;
 }
 
-message KeymanagerRequest {
+message CreateKeyRequest {
   // identificador do cliente (uuid)
   string id = 1;
   // definindo o tipo de chave
@@ -53,14 +63,16 @@ message KeymanagerRequest {
   AccountType accountType = 4;
 }
 
-message KeymanagerResponse {
+message CreateKeyResponse {
   string pixid = 1;
 }
 
-//message KeymanagerRequest {
-//  string name = 1;
-//}
-//
-//message KeymanagerReply {
-//  string message = 1;
-//}
+message ExcludeKeyRequest {
+  string pixid = 1;
+  string clientid = 2;
+}
+
+// message ExcludeKeyResponse {
+// }
+
+

@@ -7,10 +7,10 @@ datasources:
     driverClassName: org.postgresql.Driver
     username: postgres
     password: '123456'
+jpa.default.properties.hibernate.hbm2ddl.auto: update
 
 clients:
   erpitau:
     url: 'http://localhost:9091'
 
-jpa.default.properties.hibernate.hbm2ddl.auto: update
 

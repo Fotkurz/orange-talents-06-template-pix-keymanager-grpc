@@ -2,13 +2,12 @@ package keymanagergrpc.br.com.guilherme.endpoints
 
 import io.grpc.Status
 import io.grpc.stub.StreamObserver
-import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Controller
-import keymanagergrpc.br.com.guilherme.KeymanagerRequest
-import keymanagergrpc.br.com.guilherme.KeymanagerResponse
-import keymanagergrpc.br.com.guilherme.KeymanagerServiceGrpc
+import io.micronaut.http.client.exceptions.HttpClientResponseException
+import keymanagergrpc.br.com.guilherme.CreateKeyRequest
+import keymanagergrpc.br.com.guilherme.CreateKeyResponse
+import keymanagergrpc.br.com.guilherme.CreateKeyServiceGrpc
 import keymanagergrpc.br.com.guilherme.client.ClientItau
-import keymanagergrpc.br.com.guilherme.client.ClientResponseDto
 import keymanagergrpc.br.com.guilherme.modelo.ChavePix
 import keymanagergrpc.br.com.guilherme.modelo.TipoChave
 import keymanagergrpc.br.com.guilherme.modelo.TipoConta
@@ -21,57 +20,35 @@ import javax.inject.Inject
 open class CadastraChaveEndpoint(
     @Inject val keyRepository: KeyRepository,
     @Inject val clientErp: ClientItau
-) : KeymanagerServiceGrpc.KeymanagerServiceImplBase() {
+) : CreateKeyServiceGrpc.CreateKeyServiceImplBase() {
 
     private val LOGGER = LoggerFactory.getLogger(this.javaClass)
 
-    /*
-    TODO: Ainda preciso arrumar um jeito de lançar a exceção na validação, como é requerido,
-        atualmente ele só da o erro.
-     */
-
-    override fun registra(request: KeymanagerRequest, responseObserver: StreamObserver<KeymanagerResponse>?) {
-        val validator = ChavePixValidator(keyRepository, request, responseObserver)
-
+    override fun registra(request: CreateKeyRequest, responseObserver: StreamObserver<CreateKeyResponse>?) {
+        val validator = ChavePixValidator()
 
         LOGGER.info("Validando os dados do request")
-        LOGGER.info("Request: $request")
-        if (validator.validaRequest(request, responseObserver)) return
-        if (validaId(request, responseObserver)) return
-
+        if (validator.validaCreateRequest(request, responseObserver, keyRepository)) return
+        try {
+            clientErp.buscaContaETipo(request.id, request.accountType.toString())
+        } catch (e: HttpClientResponseException) {
+            responseObserver?.onError(
+                Status.PERMISSION_DENIED
+                    .withDescription("ID não encontrado")
+                    .asRuntimeException()
+            )
+        }
         val novaChave = request.toModel()
 
         keyRepository.save(novaChave)
 
         LOGGER.info("Chave do tipo ${novaChave.tipoChave} cadastrada")
-        responseObserver?.onNext(KeymanagerResponse.newBuilder().setPixid(novaChave.pixId.toString()).build())
+        responseObserver?.onNext(CreateKeyResponse.newBuilder().setPixid(novaChave.pixId.toString()).build())
         responseObserver?.onCompleted()
 
     }
 
-    private fun validaId(
-        request: KeymanagerRequest,
-        responseObserver: StreamObserver<KeymanagerResponse>?
-    ): Boolean {
-
-        try {
-            val retornoClient: HttpResponse<ClientResponseDto>? = clientErp
-                .buscaContaETipo(
-                    request.id,
-                    request.accountType.toString()
-                )
-        } catch (e: Exception) {
-            responseObserver?.onError(
-                Status.NOT_FOUND
-                    .withDescription("ID não encontrado")
-                    .asRuntimeException()
-            )
-            return true
-        }
-        return false
-    }
-
-    fun KeymanagerRequest.toModel(): ChavePix {
+    fun CreateKeyRequest.toModel(): ChavePix {
         return ChavePix(
             tipoConta = TipoConta.valueOf(this.accountType.toString()),
             tipoChave = TipoChave.valueOf(this.keyType.toString()),

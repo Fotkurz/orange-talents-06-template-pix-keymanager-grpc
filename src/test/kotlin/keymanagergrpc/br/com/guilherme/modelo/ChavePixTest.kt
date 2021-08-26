@@ -2,10 +2,8 @@ package keymanagergrpc.br.com.guilherme.modelo
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import keymanagergrpc.br.com.guilherme.repository.KeyRepository
-import net.bytebuddy.implementation.bytecode.Throw
-import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -15,22 +13,13 @@ import javax.validation.ConstraintViolationException
 @MicronautTest(transactional = false)
 internal class ChavePixTest(val keyRepository: KeyRepository) {
 
-    /*
-    TODO: OK -Deve instanciar corretamente uma chave pix
-    TODO: Deve falhar ao tentar instanciar chave com tipoChave nulo
-    TODO: Deve falhar ao tentar instanciar chave com chave nulo
-    TODO: Deve falhar ao tentar instanciar chave com clientId nulo
-    TODO: Deve falhar ao tentar instanciar chave com tipoConta nulo
-    TODO: OK - Deve falhar ao tentar instanciar chave com chave duplicada
-     */
-
     @BeforeEach
     internal fun setUp() {
         keyRepository.deleteAll()
     }
 
     @Test
-    internal fun deveInstanciarCorretamenteMinhaChavePix() {
+    internal fun deveInstanciarCorretamenteAChavePix() {
 
         val novaChave = ChavePix(
             tipoChave = TipoChave.CPF,

@@ -11,6 +11,7 @@ interface KeyRepository: CrudRepository<ChavePix, UUID>{
 
     fun existsByClientIdAndTipoChave(clientId: String, tipoChave: TipoChave): Boolean
 
-    fun findByClientId(clientId: String): ChavePix
+    fun findByClientId(clientId: String): List<ChavePix>
+    fun findByClientIdAndPixId(clientId: String, pixid: UUID?): List<ChavePix>
 
 }
