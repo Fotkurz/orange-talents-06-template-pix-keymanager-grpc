@@ -28,7 +28,7 @@ enum KeyType {
     CPF = 1;
     CELULAR = 2;
     EMAIL = 3;
-    RANDOMKEY = 4;
+    RANDOM = 4;
 }
 
 // tipo de conta

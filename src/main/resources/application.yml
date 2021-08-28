@@ -9,8 +9,13 @@ datasources:
     password: '123456'
 jpa.default.properties.hibernate.hbm2ddl.auto: update
 
+config:
+  itau:
+    ispb: '60701190'
+
 clients:
   erpitau:
     url: 'http://localhost:9091'
-
+  bcb:
+    url: 'http://localhost:8082'
 

@@ -1,13 +1,19 @@
 package keymanagergrpc.br.com.guilherme.endpoints
 
+import com.google.protobuf.Empty
 import io.grpc.Status
 import io.grpc.stub.StreamObserver
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import keymanagergrpc.br.com.guilherme.CreateKeyRequest
 import keymanagergrpc.br.com.guilherme.CreateKeyResponse
 import keymanagergrpc.br.com.guilherme.CreateKeyServiceGrpc
+import keymanagergrpc.br.com.guilherme.CreatePixKeyRequest
+import keymanagergrpc.br.com.guilherme.client.ClientBcb
 import keymanagergrpc.br.com.guilherme.client.ClientItau
+import keymanagergrpc.br.com.guilherme.client.ItauResponseDto
+import keymanagergrpc.br.com.guilherme.handler.InterceptAndValidate
 import keymanagergrpc.br.com.guilherme.modelo.ChavePix
 import keymanagergrpc.br.com.guilherme.modelo.TipoChave
 import keymanagergrpc.br.com.guilherme.modelo.TipoConta
@@ -19,18 +25,24 @@ import javax.inject.Inject
 @Controller
 open class CadastraChaveEndpoint(
     @Inject val keyRepository: KeyRepository,
-    @Inject val clientErp: ClientItau
+    @Inject val clientErp: ClientItau,
+    @Inject val clientBcb: ClientBcb
 ) : CreateKeyServiceGrpc.CreateKeyServiceImplBase() {
 
     private val LOGGER = LoggerFactory.getLogger(this.javaClass)
 
-    override fun registra(request: CreateKeyRequest, responseObserver: StreamObserver<CreateKeyResponse>?) {
+    @InterceptAndValidate
+    open override fun registra(request: CreateKeyRequest, responseObserver: StreamObserver<CreateKeyResponse>?) {
         val validator = ChavePixValidator()
 
         LOGGER.info("Validando os dados do request")
+
         if (validator.validaCreateRequest(request, responseObserver, keyRepository)) return
+
+        var httpResponse: HttpResponse<ItauResponseDto?>? = null
         try {
-            clientErp.buscaContaETipo(request.id, request.accountType.toString())
+            httpResponse = clientErp.buscaContaETipo(request.id, request.accountType.toString())
+            LOGGER.info("Resposta: ${httpResponse.body.get()}")
         } catch (e: HttpClientResponseException) {
             responseObserver?.onError(
                 Status.PERMISSION_DENIED
@@ -38,7 +50,29 @@ open class CadastraChaveEndpoint(
                     .asRuntimeException()
             )
         }
-        val novaChave = request.toModel()
+        var novaChave = request.toModel()
+
+        if(httpResponse?.body() != null) {
+            val requestBcb = httpResponse.body()?.toBcb(novaChave.chave, novaChave.tipoChave.toString())
+            LOGGER.info("Request BCB: ${requestBcb}")
+
+            try {
+                val retorno = clientBcb.cadastraChave(requestBcb!!)
+                LOGGER.info("Response BCB: ${retorno}")
+                if (novaChave.tipoChave.equals(TipoChave.RANDOM))
+                    if (retorno?.body() != null) {
+                        novaChave.chave = retorno.body.get().key
+                    }
+
+            }catch (e: HttpClientResponseException) {
+                responseObserver?.onError(
+                    Status.INVALID_ARGUMENT
+                        .withDescription("Erro na criação da chave")
+                        .asRuntimeException()
+                )
+                return
+            }
+        }
 
         keyRepository.save(novaChave)
 
@@ -48,13 +82,14 @@ open class CadastraChaveEndpoint(
 
     }
 
-    fun CreateKeyRequest.toModel(): ChavePix {
-        return ChavePix(
-            tipoConta = TipoConta.valueOf(this.accountType.toString()),
-            tipoChave = TipoChave.valueOf(this.keyType.toString()),
-            chave = this.chave,
-            clientId = this.id
-        )
-    }
+
 }
 
+fun CreateKeyRequest.toModel(): ChavePix {
+    return ChavePix(
+        tipoConta = TipoConta.valueOf(this.accountType.toString()),
+        tipoChave = TipoChave.valueOf(this.keyType.toString()),
+        clientId = this.id,
+        chave = this.chave
+    )
+}

@@ -37,6 +37,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}")
     implementation("io.micronaut:micronaut-validation")
+    implementation("io.micronaut.xml:micronaut-jackson-xml")
     implementation("io.micronaut:micronaut-http-client")
     runtimeOnly("ch.qos.logback:logback-classic")
     runtimeOnly("org.postgresql:postgresql")
@@ -46,7 +47,6 @@ dependencies {
 
     testAnnotationProcessor("io.micronaut:micronaut-inject-java")
     testCompile ("io.micronaut.test:micronaut-test-junit5:1.1.5")
-    testCompile ("org.mockito:mockito-junit-jupiter:2.22.0")
     testRuntime ("org.junit.jupiter:junit-jupiter-engine:5.1.0")
 
     // http-client
@@ -57,6 +57,9 @@ dependencies {
 
     // mockito
     testImplementation("org.mockito:mockito-core")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:3.2.0")
+    testCompile ("org.mockito:mockito-junit-jupiter:2.22.0")
+
 }
 
 application {
@@ -70,9 +73,6 @@ java {
 
 //tasks.named<Test>("test") {
 //    useJUnitPlatform()
-//
-//    testLogging.showStandardStreams = true
-//
 //}
 
 tasks {

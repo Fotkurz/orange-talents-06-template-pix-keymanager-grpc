@@ -7,11 +7,10 @@ import keymanagergrpc.br.com.guilherme.modelo.TipoChave
 import java.util.*
 
 @Repository
-interface KeyRepository: CrudRepository<ChavePix, UUID>{
+interface KeyRepository: CrudRepository<ChavePix, String>{
 
     fun existsByClientIdAndTipoChave(clientId: String, tipoChave: TipoChave): Boolean
-
     fun findByClientId(clientId: String): List<ChavePix>
-    fun findByClientIdAndPixId(clientId: String, pixid: UUID?): List<ChavePix>
+    fun findByClientIdAndPixId(clientId: String, pixid: String): ChavePix?
 
 }

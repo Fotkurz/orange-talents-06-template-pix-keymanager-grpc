@@ -3,20 +3,22 @@ package keymanagergrpc.br.com.guilherme.validacao
 import io.grpc.Status
 import io.grpc.StatusRuntimeException
 import io.grpc.stub.StreamObserver
-import io.micronaut.http.HttpResponse
 import keymanagergrpc.br.com.guilherme.AccountType
 import keymanagergrpc.br.com.guilherme.CreateKeyRequest
 import keymanagergrpc.br.com.guilherme.CreateKeyResponse
 import keymanagergrpc.br.com.guilherme.KeyType
-import keymanagergrpc.br.com.guilherme.client.ClientItau
-import keymanagergrpc.br.com.guilherme.client.ClientResponseDto
+import keymanagergrpc.br.com.guilherme.handler.ApiErrorException
+import keymanagergrpc.br.com.guilherme.handler.TipoChaveInvalidoException
+import keymanagergrpc.br.com.guilherme.handler.TipoContaInvalidoException
 import keymanagergrpc.br.com.guilherme.modelo.TipoChave
+import keymanagergrpc.br.com.guilherme.modelo.TipoConta
 import keymanagergrpc.br.com.guilherme.repository.KeyRepository
 import org.slf4j.LoggerFactory
 
 class ChavePixValidator {
 
     private val LOGGER = LoggerFactory.getLogger(this.javaClass)
+    // TODO: Melhorar o funcionamento dessa classe, ela ainda é altamente acoplada
 
     // Validação se o cliente em questão já tem esse tipo de chave cadastrado
     fun validaCreateRequest(
@@ -24,7 +26,6 @@ class ChavePixValidator {
         responseObserver: StreamObserver<CreateKeyResponse>?,
         keyRepository: KeyRepository
     ): Boolean {
-        // TODO: Melhorar o funcionamento dessa classe, ela ainda é altamente acoplada
 
         validaTipoConta(request.accountType).apply {
             when (this) {
@@ -65,13 +66,14 @@ class ChavePixValidator {
                 Status.INVALID_ARGUMENT
                     .withDescription("Tipo de conta é obrigatório")
                     .asRuntimeException()
+
             }
             else -> null
         }
     }
 
     // Valida se cliente já tem chave do tipo
-    private fun validaChaveJaExistente(
+    fun validaChaveJaExistente(
         clientId: String, keyType: KeyType, keyRepository: KeyRepository
     ): StatusRuntimeException? = when (keyRepository.existsByClientIdAndTipoChave(clientId, TipoChave.valueOf(keyType.toString()))) {
         true -> {
@@ -83,7 +85,7 @@ class ChavePixValidator {
         else -> null
     }
 
-    private fun validaTipoChave(
+    fun validaTipoChave(
         keyType: KeyType, chave: String
     ): StatusRuntimeException? {
         when(keyType) {
@@ -93,8 +95,8 @@ class ChavePixValidator {
                     .withDescription("Tipo chave é obrigatório")
                     .asRuntimeException()
             }
-            KeyType.RANDOMKEY -> {
-                if(notNull(chave)) {
+            KeyType.RANDOM -> {
+                if(!chave.isNullOrBlank()) {
                     return Status.INVALID_ARGUMENT
                         .withDescription("Chave Aleatória não pode ter valor associado")
                         .asRuntimeException()

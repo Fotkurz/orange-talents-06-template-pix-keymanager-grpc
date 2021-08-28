@@ -75,27 +75,9 @@ internal class ChavePixTest(val keyRepository: KeyRepository) {
     }
 
     @Test
-    internal fun deveFalharAoInstanciarChavePixComChaveNula() {
-        val novaChave = ChavePix(
-            tipoChave = TipoChave.CPF,
-            chave = "",
-            clientId = "1",
-            tipoConta = TipoConta.CONTA_CORRENTE
-        )
-
-        assertThrows<ConstraintViolationException> {
-            keyRepository.save(novaChave)
-        }
-
-        val lista = keyRepository.findAll()
-
-        assertEquals(0, lista.count())
-    }
-
-    @Test
     internal fun deveGerarUmaChaveAleatoriaAoCadastrarTipoRandom() {
         val novaChave = ChavePix(
-            tipoChave = TipoChave.RANDOMKEY,
+            tipoChave = TipoChave.RANDOM,
             chave = "",
             clientId = "1",
             tipoConta = TipoConta.CONTA_CORRENTE
