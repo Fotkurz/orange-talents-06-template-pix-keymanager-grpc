@@ -58,7 +58,7 @@ internal class CadastraChaveEndpointTest() {
             ?.thenReturn(HttpResponse.ok(criaResponseParaItau(tipo = "CONTA_CORRENTE")))
 
         val response = grpcClient.registra(
-            CreateKeyRequest.newBuilder()
+            CreateRequest.newBuilder()
                 .setId("1")
                 .setAccountType(AccountType.CONTA_CORRENTE)
                 .setKeyType(KeyType.CPF)
@@ -88,7 +88,7 @@ internal class CadastraChaveEndpointTest() {
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             grpcClient.registra(
-                CreateKeyRequest.newBuilder()
+                CreateRequest.newBuilder()
                     .setId("1")
                     .setAccountType(AccountType.CONTA_CORRENTE)
                     .setKeyType(KeyType.CPF)
@@ -108,7 +108,7 @@ internal class CadastraChaveEndpointTest() {
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             grpcClient.registra(
-                CreateKeyRequest.newBuilder()
+                CreateRequest.newBuilder()
                     .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                     .setAccountType(AccountType.CONTA_CORRENTE)
                     .setKeyType(KeyType.CPF)
@@ -128,7 +128,7 @@ internal class CadastraChaveEndpointTest() {
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             val primeiro = grpcClient.registra(
-                CreateKeyRequest.newBuilder()
+                CreateRequest.newBuilder()
                     .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                     .setAccountType(AccountType.CONTA_CORRENTE)
                     .setKeyType(KeyType.CPF)
@@ -146,7 +146,7 @@ internal class CadastraChaveEndpointTest() {
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             val primeiro = grpcClient.registra(
-                CreateKeyRequest.newBuilder()
+                CreateRequest.newBuilder()
                     .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                     .setAccountType(AccountType.CONTA_CORRENTE)
                     .setKeyType(KeyType.CELULAR)
@@ -164,7 +164,7 @@ internal class CadastraChaveEndpointTest() {
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             val primeiro = grpcClient.registra(
-                CreateKeyRequest.newBuilder()
+                CreateRequest.newBuilder()
                     .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                     .setAccountType(AccountType.CONTA_CORRENTE)
                     .setKeyType(KeyType.EMAIL)
@@ -182,7 +182,7 @@ internal class CadastraChaveEndpointTest() {
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             val primeiro = grpcClient.registra(
-                CreateKeyRequest.newBuilder()
+                CreateRequest.newBuilder()
                     .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                     .setAccountType(AccountType.CONTA_CORRENTE)
                     .setKeyType(KeyType.RANDOM)
@@ -201,7 +201,7 @@ internal class CadastraChaveEndpointTest() {
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             val primeiro = grpcClient.registra(
-                CreateKeyRequest.newBuilder()
+                CreateRequest.newBuilder()
                     .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                     .setKeyType(KeyType.RANDOM)
                     .setChave("")
@@ -219,20 +219,21 @@ internal class CadastraChaveEndpointTest() {
         mockaRequisicaoItauComSucesso("1", "CONTA_CORRENTE")
             ?.thenThrow(HttpClientResponseException::class.java)
 
+        mockaCreateRequisicaoBcb(criaPixRequestKeyParaBcb("12345678912", "CPF"))
+
         val retornaErro = assertThrows<StatusRuntimeException> {
             val primeiro = grpcClient.registra(
-                CreateKeyRequest.newBuilder()
+                CreateRequest.newBuilder()
                     .setId("1")
                     .setAccountType(AccountType.CONTA_CORRENTE)
                     .setKeyType(KeyType.CPF)
-                    .setChave("02467781054")
+                    .setChave("12345678912")
                     .build()
             )
         }
-
         assertNotNull(retornaErro)
-        assertEquals(retornaErro.status.code, Status.PERMISSION_DENIED.code)
-        assertEquals(retornaErro.status.description, "ID não encontrado")
+        assertEquals(Status.PERMISSION_DENIED.code, retornaErro.status.code)
+        assertEquals("ID não encontrado", retornaErro.status.description)
     }
 
     @Test
@@ -240,7 +241,7 @@ internal class CadastraChaveEndpointTest() {
 
         val retornaErro = assertThrows<StatusRuntimeException> {
             val primeiro = grpcClient.registra(
-                CreateKeyRequest.newBuilder()
+                CreateRequest.newBuilder()
                     .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                     .setAccountType(AccountType.CONTA_CORRENTE)
                     .setChave("02467781054")
@@ -276,7 +277,7 @@ internal class CadastraChaveEndpointTest() {
             .thenReturn(HttpResponse.created(bcbPixResponse))
 
         val response = grpcClient.registra(
-            CreateKeyRequest.newBuilder()
+            CreateRequest.newBuilder()
                 .setId("1")
                 .setAccountType(AccountType.CONTA_CORRENTE)
                 .setKeyType(KeyType.RANDOM)
@@ -297,7 +298,7 @@ internal class CadastraChaveEndpointTest() {
 
         val error = assertThrows<StatusRuntimeException> {
             grpcClient.registra(
-                CreateKeyRequest.newBuilder()
+                CreateRequest.newBuilder()
                     .setId("1")
                     .setKeyType(KeyType.CPF)
                     .setChave("12345678912")
@@ -307,7 +308,7 @@ internal class CadastraChaveEndpointTest() {
         }
 
         assertEquals(Status.INVALID_ARGUMENT.code, error.status.code)
-        assertEquals("Erro na criação da chave", error.status.description)
+        assertEquals("Falha no cadastro da chave no Banco Central", error.status.description)
 
     }
 

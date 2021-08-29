@@ -1,12 +1,7 @@
 package keymanagergrpc.br.com.guilherme
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText
 import io.micronaut.core.annotation.Introspected
-import keymanagergrpc.br.com.guilherme.client.ItauResponseDto
 import java.time.LocalDateTime
-import java.util.*
-import javax.persistence.Embeddable
 
 @Introspected
 data class CreatePixKeyRequest(

@@ -1,7 +1,6 @@
 package keymanagergrpc.br.com.guilherme.endpoints
 
 import io.micronaut.aop.Around
-import io.micronaut.context.annotation.Type
 
 @Around
 @MustBeDocumented

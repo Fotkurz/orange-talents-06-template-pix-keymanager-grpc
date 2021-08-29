@@ -8,7 +8,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import javax.persistence.PersistenceException
-import javax.validation.ConstraintViolationException
 
 @MicronautTest(transactional = false)
 internal class ChavePixTest(val keyRepository: KeyRepository) {

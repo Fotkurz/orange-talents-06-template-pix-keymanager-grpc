@@ -1,16 +1,15 @@
 package keymanagergrpc.br.com.guilherme.endpoints
 
 import io.grpc.ManagedChannel
-import io.grpc.Status
 import io.grpc.StatusRuntimeException
 import io.micronaut.context.annotation.Factory
 import io.micronaut.grpc.annotation.GrpcChannel
 import io.micronaut.grpc.server.GrpcServerChannel
 import io.micronaut.http.HttpResponse
-import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.annotation.MockBean
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
+import keymanagergrpc.br.com.guilherme.CreateKeyServiceGrpc
 import keymanagergrpc.br.com.guilherme.CreatePixKeyRequest
 import keymanagergrpc.br.com.guilherme.ExcludeKeyRequest
 import keymanagergrpc.br.com.guilherme.ExcludeKeyServiceGrpc
@@ -19,7 +18,8 @@ import keymanagergrpc.br.com.guilherme.modelo.ChavePix
 import keymanagergrpc.br.com.guilherme.modelo.TipoChave
 import keymanagergrpc.br.com.guilherme.modelo.TipoConta
 import keymanagergrpc.br.com.guilherme.repository.KeyRepository
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -35,6 +35,9 @@ internal class DeletaChaveEndpointTest {
 
     @Inject
     lateinit var grpcClient: ExcludeKeyServiceGrpc.ExcludeKeyServiceBlockingStub
+
+    @Inject
+    lateinit var grpcCadastra: CreateKeyServiceGrpc.CreateKeyServiceBlockingStub
 
     @Inject
     lateinit var keyRepository: KeyRepository
@@ -161,22 +164,23 @@ internal class DeletaChaveEndpointTest {
 
     @Test
     internal fun deveFalharAoTentarExcluirUmaChaveCujoClientIdNaoExistaNoItau() {
+
         val chave = ChavePix(
             tipoChave = TipoChave.CPF,
-            chave = "12345678910",
-            clientId = "idInexistente",
+            chave = "12345678912",
+            clientId = "1",
             tipoConta = TipoConta.CONTA_CORRENTE
         )
 
         keyRepository.save(chave)
 
-        Mockito.`when`(clientItau.buscaContaETipo("idInexistente", "CONTA_CORRENTE"))
+        Mockito.`when`(clientItau.buscaContaETipo("1", "CONTA_CORRENTE"))
             .thenThrow(HttpClientResponseException::class.java)
 
         val error = assertThrows<StatusRuntimeException> {
         grpcClient.exclui(ExcludeKeyRequest.newBuilder()
             .setPixid(chave.pixId)
-            .setClientid(chave.clientId)
+            .setClientid("CONTA_CORRENTE")
             .build()
         )}
 
@@ -245,18 +249,18 @@ internal class DeletaChaveEndpointTest {
 
     fun criaResponseParaItau(tipo: String): ItauResponseDto {
         return ItauResponseDto(
-            tipo = "CONTA_CORRENTE",
-            instituicao = Instituicao(nome = "ITAU", ispb = "1111"),
+            tipo = tipo,
+            instituicao = Instituicao(nome = "ITAU", ispb = "60701190"),
             titular = Titular(id = "1", nome = "Tolkien", cpf = "12345678912"),
             agencia = "0001",
-            numero = "121212"
+            numero = "123456"
         )
     }
 
-    fun criaPixRequestKeyParaBcb(chave: String, tipo: String): CreatePixKeyRequest {
+    fun criaPixRequestKeyParaBcb(key: String, keyType: String): CreatePixKeyRequest {
         return CreatePixKeyRequest(
-            keyType = tipo,
-            key = chave,
+            keyType = keyType,
+            key = key,
             bankAccount = mapOf(
                 Pair("participant", "60701190"),
                 Pair("branch", "0001"),
@@ -280,6 +284,9 @@ internal class DeletaChaveEndpointTest {
 
     fun mockaCreateRequisicaoBcb(requestBcb: CreatePixKeyRequest): OngoingStubbing<HttpResponse<CreatePixKeyResponse>>? {
         return Mockito.`when`(clientBcb.cadastraChave(requestBcb))
+    }
+    fun mockaDeleteChaveBcb(key: String): OngoingStubbing<HttpResponse<Map<String, String>>>? {
+        return Mockito.`when`(clientBcb.deletaChave(key))
     }
 
     @MockBean(ClientItau::class)

@@ -12,7 +12,7 @@ package keymanagergrpc.br.com.guilherme;
 
 
 service CreateKeyService {
-  rpc registra (CreateKeyRequest) returns (CreateKeyResponse) {}
+  rpc registra (CreateRequest) returns (CreateResponse) {}
 
 
 }
@@ -38,7 +38,7 @@ enum AccountType {
   CONTA_POUPANCA = 2;
 }
 
-message CreateKeyRequest {
+message CreateRequest {
   // identificador do cliente (uuid)
   string id = 1;
   // definindo o tipo de chave
@@ -63,7 +63,7 @@ message CreateKeyRequest {
   AccountType accountType = 4;
 }
 
-message CreateKeyResponse {
+message CreateResponse {
   string pixid = 1;
 }
 

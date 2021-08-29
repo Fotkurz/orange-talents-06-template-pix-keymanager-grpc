@@ -2,16 +2,13 @@ package keymanagergrpc.br.com.guilherme.validacao
 
 import io.grpc.Status
 import io.grpc.StatusRuntimeException
-import io.grpc.stub.StreamObserver
 import keymanagergrpc.br.com.guilherme.AccountType
-import keymanagergrpc.br.com.guilherme.CreateKeyRequest
-import keymanagergrpc.br.com.guilherme.CreateKeyResponse
+import keymanagergrpc.br.com.guilherme.CreateRequest
 import keymanagergrpc.br.com.guilherme.KeyType
-import keymanagergrpc.br.com.guilherme.handler.ApiErrorException
+import keymanagergrpc.br.com.guilherme.handler.ChaveDuplicadaException
 import keymanagergrpc.br.com.guilherme.handler.TipoChaveInvalidoException
 import keymanagergrpc.br.com.guilherme.handler.TipoContaInvalidoException
 import keymanagergrpc.br.com.guilherme.modelo.TipoChave
-import keymanagergrpc.br.com.guilherme.modelo.TipoConta
 import keymanagergrpc.br.com.guilherme.repository.KeyRepository
 import org.slf4j.LoggerFactory
 
@@ -22,133 +19,79 @@ class ChavePixValidator {
 
     // Validação se o cliente em questão já tem esse tipo de chave cadastrado
     fun validaCreateRequest(
-        request: CreateKeyRequest,
-        responseObserver: StreamObserver<CreateKeyResponse>?,
+        request: CreateRequest,
         keyRepository: KeyRepository
     ): Boolean {
 
-        validaTipoConta(request.accountType).apply {
-            when (this) {
-                is StatusRuntimeException -> {
-                    responseObserver?.onError(this)
-                    return true
-                }
-            }
-        }
-
-        validaTipoChave(request.keyType, request.chave).apply {
-            when(this) {
-                is StatusRuntimeException -> {
-                    responseObserver?.onError(this)
-                    return true
-                }
-            }
-        }
-
-        validaChaveJaExistente(request.id, request.keyType, keyRepository).apply {
-            when(this) {
-                is StatusRuntimeException -> {
-                    responseObserver?.onError(this)
-                    return true
-                }
-            }
+        if(
+            validaTipoConta(request.accountType) &&
+            validaTipoChave(request.keyType, request.chave) &&
+            validaChaveJaExistente(request.id, request.keyType, keyRepository))
+        {
+            return true
         }
 
         LOGGER.info("Validação concluída com sucesso")
         return false
     }
 
-    public fun validaTipoConta(
+    fun validaTipoConta(
        accountType: AccountType
-    ): StatusRuntimeException? {
+    ): Boolean {
         return when (accountType) {
             AccountType.UNKNOWN_ACCOUNT -> {
-                Status.INVALID_ARGUMENT
-                    .withDescription("Tipo de conta é obrigatório")
-                    .asRuntimeException()
-
+                throw TipoContaInvalidoException("Tipo de conta é obrigatório")
             }
-            else -> null
+            else -> true
         }
     }
 
     // Valida se cliente já tem chave do tipo
     fun validaChaveJaExistente(
         clientId: String, keyType: KeyType, keyRepository: KeyRepository
-    ): StatusRuntimeException? = when (keyRepository.existsByClientIdAndTipoChave(clientId, TipoChave.valueOf(keyType.toString()))) {
+    ): Boolean = when (keyRepository.existsByClientIdAndTipoChave(clientId, TipoChave.valueOf(keyType.toString()))) {
         true -> {
-            Status.ALREADY_EXISTS
-                    .withDescription("usuário já tem chave do tipo ${keyType} cadastrada")
-                    .asRuntimeException()
-
+            throw ChaveDuplicadaException("usuário já tem chave do tipo ${keyType} cadastrada")
         }
-        else -> null
+        else -> true
     }
 
     fun validaTipoChave(
         keyType: KeyType, chave: String
-    ): StatusRuntimeException? {
+    ): Boolean {
         when(keyType) {
             KeyType.UNRECOGNIZED, KeyType.UNKNOWN_TYPE -> {
                 LOGGER.error("Chave nao reconhecido")
-                return Status.INVALID_ARGUMENT
-                    .withDescription("Tipo chave é obrigatório")
-                    .asRuntimeException()
+                throw TipoChaveInvalidoException("Tipo chave é obrigatório")
             }
             KeyType.RANDOM -> {
                 if(!chave.isNullOrBlank()) {
-                    return Status.INVALID_ARGUMENT
-                        .withDescription("Chave Aleatória não pode ter valor associado")
-                        .asRuntimeException()
+                    throw TipoChaveInvalidoException("Chave Aleatória não pode ter valor associado")
                 }
-                return null
             }
             KeyType.CPF -> {
                 if(!cpfValido(chave)) {
-                    return Status.INVALID_ARGUMENT
-                            .withDescription("CPF Inválido")
-                            .asRuntimeException()
+                    throw TipoChaveInvalidoException("CPF Inválido")
                 }
-                return null
             }
             KeyType.CELULAR -> {
                 if(!celularValido(chave)) {
-                    return Status.INVALID_ARGUMENT
-                        .withDescription("CELULAR Inválido")
-                        .asRuntimeException()
+                    throw TipoChaveInvalidoException("CELULAR Inválido")
                 }
-                return null
             }
             KeyType.EMAIL -> {
                 if(!emailValido(chave)) {
-                    return Status.INVALID_ARGUMENT
-                        .withDescription("EMAIL Inválido")
-                        .asRuntimeException()
+                    throw TipoChaveInvalidoException("EMAIL Inválido")
                 }
-                return null
             }
 
         }
-        return null
-    }
-
-    // Valida se o campo chave é nulo
-    private fun campoChaveENulo(request: CreateKeyRequest): Boolean {
-        if (request.chave.isNullOrBlank()) {
-            return true
-        }
-        return false
-    }
-
-    // Valida se não é null
-    private fun notNull(valor: Any): Boolean {
-        if (valor != null) return true
-        return false
+        return true
     }
 
     // Valida seo CPF tem formato valido
     private fun cpfValido(valor: String): Boolean {
-        if (notNull(valor)) {
+        if (valor != null) {
             val regex = Regex("^[0-9]{11}\$")
             if (valor.matches(regex)) return true
         }
@@ -157,7 +100,7 @@ class ChavePixValidator {
 
     // Valida seo celular tem formato valido
     private fun celularValido(valor: String): Boolean {
-        if (notNull(valor)) {
+        if (!valor.isNullOrBlank()) {
             val regex = Regex("^\\+[1-9][0-9]\\d{1,14}\$")
             if (valor.matches(regex)) return true
         }
@@ -166,7 +109,7 @@ class ChavePixValidator {
 
     // Valida seo email tem formato valido
     private fun emailValido(valor: String): Boolean {
-        if (notNull(valor)) {
+        if (!valor.isNullOrBlank()) {
             // Regex disponível em https://html.spec.whatwg.org/multipage/input.html#valid-e-mail-address
             val regex =
                 Regex("^[a-zA-Z0-9.!#\$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\$")
