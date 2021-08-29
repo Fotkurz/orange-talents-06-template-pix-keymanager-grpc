@@ -10,14 +10,11 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.annotation.MockBean
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import keymanagergrpc.br.com.guilherme.CreateKeyServiceGrpc
-import keymanagergrpc.br.com.guilherme.client.dtos.CreatePixKeyRequest
 import keymanagergrpc.br.com.guilherme.ExcludeKeyRequest
 import keymanagergrpc.br.com.guilherme.ExcludeKeyServiceGrpc
-import keymanagergrpc.br.com.guilherme.client.*
-import keymanagergrpc.br.com.guilherme.client.dtos.CreatePixKeyResponse
-import keymanagergrpc.br.com.guilherme.client.dtos.Instituicao
-import keymanagergrpc.br.com.guilherme.client.dtos.ItauResponseDto
-import keymanagergrpc.br.com.guilherme.client.dtos.Titular
+import keymanagergrpc.br.com.guilherme.client.ClientBcb
+import keymanagergrpc.br.com.guilherme.client.ClientItau
+import keymanagergrpc.br.com.guilherme.client.dtos.*
 import keymanagergrpc.br.com.guilherme.modelo.ChavePix
 import keymanagergrpc.br.com.guilherme.modelo.TipoChave
 import keymanagergrpc.br.com.guilherme.modelo.TipoConta
