@@ -3,10 +3,10 @@ package keymanagergrpc.br.com.guilherme.validacao
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import keymanagergrpc.br.com.guilherme.client.ClientItau
-import keymanagergrpc.br.com.guilherme.client.ItauResponseDto
+import keymanagergrpc.br.com.guilherme.client.dtos.ItauResponseDto
 import keymanagergrpc.br.com.guilherme.handler.ValidacaoErpItauException
 
-class ValidaErpItau(val clientErp: ClientItau) {
+class ClientItauValidator(val clientErp: ClientItau) {
 
     fun buscaPorContaETipoNoItau(
         clientId: String, tipo: String,

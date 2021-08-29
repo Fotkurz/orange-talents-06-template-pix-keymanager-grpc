@@ -1,7 +1,6 @@
-package keymanagergrpc.br.com.guilherme.client
+package keymanagergrpc.br.com.guilherme.client.dtos
 
 import io.micronaut.core.annotation.Introspected
-import keymanagergrpc.br.com.guilherme.CreatePixKeyRequest
 import keymanagergrpc.br.com.guilherme.modelo.TipoConta
 
 @Introspected

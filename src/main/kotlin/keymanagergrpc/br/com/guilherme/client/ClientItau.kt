@@ -5,6 +5,7 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.PathVariable
 import io.micronaut.http.annotation.QueryValue
 import io.micronaut.http.client.annotation.Client
+import keymanagergrpc.br.com.guilherme.client.dtos.ItauResponseDto
 
 @Client("\${clients.erpitau.url}")
 interface ClientItau {

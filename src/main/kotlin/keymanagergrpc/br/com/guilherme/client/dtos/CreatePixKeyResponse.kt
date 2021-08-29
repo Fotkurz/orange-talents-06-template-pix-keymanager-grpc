@@ -1,4 +1,4 @@
-package keymanagergrpc.br.com.guilherme.client
+package keymanagergrpc.br.com.guilherme.client.dtos
 
 import io.micronaut.core.annotation.Introspected
 

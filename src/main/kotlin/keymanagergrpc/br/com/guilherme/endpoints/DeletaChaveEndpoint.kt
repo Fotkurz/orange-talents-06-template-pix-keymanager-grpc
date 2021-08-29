@@ -11,8 +11,8 @@ import keymanagergrpc.br.com.guilherme.handler.ExistenciaDeChaveException
 import keymanagergrpc.br.com.guilherme.handler.InterceptAndValidate
 import keymanagergrpc.br.com.guilherme.repository.KeyRepository
 import keymanagergrpc.br.com.guilherme.validacao.ChavePixValidator
-import keymanagergrpc.br.com.guilherme.validacao.ValidaClientBcb
-import keymanagergrpc.br.com.guilherme.validacao.ValidaErpItau
+import keymanagergrpc.br.com.guilherme.validacao.ClientBcbValidator
+import keymanagergrpc.br.com.guilherme.validacao.ClientItauValidator
 import org.slf4j.LoggerFactory
 import javax.inject.Inject
 
@@ -38,8 +38,8 @@ open class DeletaChaveEndpoint(
             LOGGER.error("Cliente não possuí chave pix do tipo")
             throw ExistenciaDeChaveException("Cliente não possuí essa chave pix")
         }
-        ValidaErpItau(clientItau).buscaPorContaETipoNoItau(chave.clientId, chave.tipoConta.toString())
-        ValidaClientBcb(clientBcb).deletaChaveNoBcb(chave)
+        ClientItauValidator(clientItau).buscaPorContaETipoNoItau(chave.clientId, chave.tipoConta.toString())
+        ClientBcbValidator(clientBcb).deletaChaveNoBcb(chave)
         LOGGER.info("Deletando CHAVEPIX")
         keyRepository.deleteById(chave.pixId)
         LOGGER.info("Chave pix deletada cpom sucesso")

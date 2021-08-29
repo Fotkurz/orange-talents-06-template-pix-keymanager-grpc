@@ -7,7 +7,8 @@ import io.micronaut.http.annotation.Get
 import io.micronaut.http.annotation.PathVariable
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.client.annotation.Client
-import keymanagergrpc.br.com.guilherme.CreatePixKeyRequest
+import keymanagergrpc.br.com.guilherme.client.dtos.CreatePixKeyRequest
+import keymanagergrpc.br.com.guilherme.client.dtos.CreatePixKeyResponse
 
 @Client("\${clients.bcb.url}")
 interface ClientBcb {

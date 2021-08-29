@@ -2,12 +2,12 @@ package keymanagergrpc.br.com.guilherme.validacao
 
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import keymanagergrpc.br.com.guilherme.client.ClientBcb
-import keymanagergrpc.br.com.guilherme.client.ItauResponseDto
+import keymanagergrpc.br.com.guilherme.client.dtos.ItauResponseDto
 import keymanagergrpc.br.com.guilherme.handler.ValidacaoBcbException
 import keymanagergrpc.br.com.guilherme.modelo.ChavePix
 import keymanagergrpc.br.com.guilherme.modelo.TipoChave
 
-class ValidaClientBcb(val clientBcb: ClientBcb) {
+class ClientBcbValidator(val clientBcb: ClientBcb) {
 
     fun cadastraChaveNoBcb(
         respostaItau: ItauResponseDto?,

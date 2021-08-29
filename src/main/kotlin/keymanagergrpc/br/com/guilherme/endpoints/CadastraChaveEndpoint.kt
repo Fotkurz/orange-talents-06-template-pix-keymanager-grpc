@@ -14,8 +14,8 @@ import keymanagergrpc.br.com.guilherme.modelo.TipoChave
 import keymanagergrpc.br.com.guilherme.modelo.TipoConta
 import keymanagergrpc.br.com.guilherme.repository.KeyRepository
 import keymanagergrpc.br.com.guilherme.validacao.ChavePixValidator
-import keymanagergrpc.br.com.guilherme.validacao.ValidaClientBcb
-import keymanagergrpc.br.com.guilherme.validacao.ValidaErpItau
+import keymanagergrpc.br.com.guilherme.validacao.ClientBcbValidator
+import keymanagergrpc.br.com.guilherme.validacao.ClientItauValidator
 import org.slf4j.LoggerFactory
 import javax.inject.Inject
 
@@ -36,10 +36,10 @@ open class CadastraChaveEndpoint(
 
         validator.validaCreateRequest(request, keyRepository)
 
-        val respostaItau = ValidaErpItau(clientErp).buscaPorContaETipoNoItau(request.id, request.accountType.toString())
+        val respostaItau = ClientItauValidator(clientErp).buscaPorContaETipoNoItau(request.id, request.accountType.toString())
 
         val novaChave = request.toModel()
-        ValidaClientBcb(clientBcb).cadastraChaveNoBcb(respostaItau, novaChave)
+        ClientBcbValidator(clientBcb).cadastraChaveNoBcb(respostaItau, novaChave)
 
         if(respostaItau == null) throw ValidacaoErpItauException("Erro Itau")
 

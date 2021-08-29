@@ -1,4 +1,4 @@
-package keymanagergrpc.br.com.guilherme
+package keymanagergrpc.br.com.guilherme.client.dtos
 
 import io.micronaut.core.annotation.Introspected
 import java.time.LocalDateTime
