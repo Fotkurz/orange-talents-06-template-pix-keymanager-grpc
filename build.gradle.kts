@@ -58,6 +58,7 @@ dependencies {
     // mockito
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.mockito.kotlin:mockito-kotlin:3.2.0")
+    testImplementation("org.mockito:mockito-inline:3.+")
     testCompile ("org.mockito:mockito-junit-jupiter:2.22.0")
 
 }
@@ -71,9 +72,9 @@ java {
     sourceCompatibility = JavaVersion.toVersion("11")
 }
 
-//tasks.named<Test>("test") {
-//    useJUnitPlatform()
-//}
+tasks.named<Test>("test") {
+    useJUnitPlatform()
+}
 
 tasks {
     compileKotlin {

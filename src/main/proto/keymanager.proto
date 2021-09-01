@@ -13,22 +13,28 @@ package keymanagergrpc.br.com.guilherme;
 
 service CreateKeyService {
   rpc registra (CreateRequest) returns (CreateResponse) {}
-
-
 }
 
 service ExcludeKeyService {
-
   rpc exclui (ExcludeKeyRequest) returns (google.protobuf.Empty) {}
+}
+
+service CheckKeyService {
+  rpc consulta (CheckKeyRequest) returns (CheckKeyResponse) {}
+}
+
+service ListKeyService {
+  rpc listar (ListKeyRequest) returns (stream ListKeyResponse) {}
 }
 
 // tipo de chave
 enum KeyType {
     UNKNOWN_TYPE = 0;
     CPF = 1;
-    CELULAR = 2;
-    EMAIL = 3;
-    RANDOM = 4;
+    CNPJ = 2;
+    PHONE = 3;
+    EMAIL = 4;
+    RANDOM = 5;
 }
 
 // tipo de conta
@@ -72,7 +78,50 @@ message ExcludeKeyRequest {
   string clientid = 2;
 }
 
-// message ExcludeKeyResponse {
-// }
+message CheckKeyRequest {
 
+  message PorPixId {
+    string pixId = 1;
+    string clientId = 2;
+  }
 
+  optional PorPixId porPixId = 1;
+  optional string porChave = 2;
+
+}
+
+message CheckKeyResponse {
+  string pixid = 1;
+  string clientid = 2;
+  KeyType keytype = 3;
+  string key = 4;
+  string nometitular = 5;
+  string cpftitular = 6;
+  message Instituicao {
+    string nome = 1;
+    string numero = 2;
+    AccountType accounttype = 3;
+  }
+  Instituicao instituicao = 7;
+  string datahora = 8;
+}
+
+message ListKeyRequest {
+  string clientId = 1;
+}
+/*
+Pix ID;
+Identificador do cliente;
+Tipo da chave;
+Valor da chave;
+tipo da conta (Corrente ou Poupança);
+Data/hora de registro ou criação da chave;
+ */
+message ListKeyResponse {
+  string pixId = 1;
+  string clientId = 2;
+  KeyType keyType = 3;
+  string key = 4;
+  AccountType accountType = 5;
+  string dataregistro = 6;
+}

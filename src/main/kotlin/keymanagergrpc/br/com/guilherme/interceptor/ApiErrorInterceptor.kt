@@ -1,4 +1,4 @@
-package keymanagergrpc.br.com.guilherme.handler
+package keymanagergrpc.br.com.guilherme.interceptor
 
 import io.grpc.BindableService
 import io.grpc.Status
@@ -6,6 +6,7 @@ import io.grpc.stub.StreamObserver
 import io.micronaut.aop.InterceptorBean
 import io.micronaut.aop.MethodInterceptor
 import io.micronaut.aop.MethodInvocationContext
+import keymanagergrpc.br.com.guilherme.CreateRequest
 import keymanagergrpc.br.com.guilherme.repository.KeyRepository
 import keymanagergrpc.br.com.guilherme.validacao.ChavePixValidator
 import org.slf4j.LoggerFactory
@@ -14,7 +15,7 @@ import javax.inject.Singleton
 
 @Singleton
 @InterceptorBean(InterceptAndValidate::class)
-class ApiErrorHandler(@Inject val repository: KeyRepository) : MethodInterceptor<BindableService, Any> {
+class ApiErrorInterceptor(@Inject val repository: KeyRepository) : MethodInterceptor<BindableService, Any> {
 
     val LOGGER = LoggerFactory.getLogger(this.javaClass)
 

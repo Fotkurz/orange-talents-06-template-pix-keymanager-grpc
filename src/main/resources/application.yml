@@ -19,3 +19,4 @@ clients:
   bcb:
     url: 'http://localhost:8082'
 
+ispb.file.path: 'ParticipantesSTRport.csv'

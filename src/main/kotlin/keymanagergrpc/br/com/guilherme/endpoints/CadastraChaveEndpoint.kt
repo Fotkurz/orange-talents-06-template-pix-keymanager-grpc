@@ -7,8 +7,8 @@ import keymanagergrpc.br.com.guilherme.CreateRequest
 import keymanagergrpc.br.com.guilherme.CreateResponse
 import keymanagergrpc.br.com.guilherme.client.ClientBcb
 import keymanagergrpc.br.com.guilherme.client.ClientItau
-import keymanagergrpc.br.com.guilherme.handler.InterceptAndValidate
-import keymanagergrpc.br.com.guilherme.handler.ValidacaoErpItauException
+import keymanagergrpc.br.com.guilherme.interceptor.InterceptAndValidate
+import keymanagergrpc.br.com.guilherme.interceptor.ValidacaoErpItauException
 import keymanagergrpc.br.com.guilherme.modelo.ChavePix
 import keymanagergrpc.br.com.guilherme.modelo.TipoChave
 import keymanagergrpc.br.com.guilherme.modelo.TipoConta
@@ -36,19 +36,20 @@ open class CadastraChaveEndpoint(
 
         validator.validaCreateRequest(request, keyRepository)
 
+        LOGGER.info("Validando client do ITAU")
         val respostaItau = ClientItauValidator(clientErp).buscaPorContaETipoNoItau(request.id, request.accountType.toString())
 
         val novaChave = request.toModel()
+        LOGGER.info("Cadastrando no BCB")
         ClientBcbValidator(clientBcb).cadastraChaveNoBcb(respostaItau, novaChave)
 
         if(respostaItau == null) throw ValidacaoErpItauException("Erro Itau")
 
         keyRepository.save(novaChave)
 
-        LOGGER.info("Chave do tipo ${novaChave.tipoChave} cadastrada")
-        responseObserver?.onNext(CreateResponse.newBuilder().setPixid(novaChave.pixId.toString()).build())
+        LOGGER.info("Chave do tipo ${novaChave.tipoChave} cadastrada, pixid: ${novaChave.pixId}, clientId: ${novaChave.clientId}")
+        responseObserver?.onNext(CreateResponse.newBuilder().setPixid(novaChave.pixId).build())
         responseObserver?.onCompleted()
-
     }
 
 }

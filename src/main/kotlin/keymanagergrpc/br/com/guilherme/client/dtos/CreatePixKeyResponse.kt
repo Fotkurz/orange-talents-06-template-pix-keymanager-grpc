@@ -9,5 +9,5 @@ data class CreatePixKeyResponse(
     val bankAccount: Map<String, String>,
     val owner: Map<String, String>,
     val createdAt: String
-    ) {
-}
+    )
+

@@ -2,7 +2,8 @@ package keymanagergrpc.br.com.guilherme.modelo
 
 enum class TipoChave {
     CPF,
-    CELULAR,
+    CNPJ,
+    PHONE,
     EMAIL,
     RANDOM;
 }

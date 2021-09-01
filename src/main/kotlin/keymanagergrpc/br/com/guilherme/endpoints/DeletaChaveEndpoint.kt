@@ -7,10 +7,9 @@ import keymanagergrpc.br.com.guilherme.ExcludeKeyRequest
 import keymanagergrpc.br.com.guilherme.ExcludeKeyServiceGrpc
 import keymanagergrpc.br.com.guilherme.client.ClientBcb
 import keymanagergrpc.br.com.guilherme.client.ClientItau
-import keymanagergrpc.br.com.guilherme.handler.ExistenciaDeChaveException
-import keymanagergrpc.br.com.guilherme.handler.InterceptAndValidate
+import keymanagergrpc.br.com.guilherme.interceptor.ExistenciaDeChaveException
+import keymanagergrpc.br.com.guilherme.interceptor.InterceptAndValidate
 import keymanagergrpc.br.com.guilherme.repository.KeyRepository
-import keymanagergrpc.br.com.guilherme.validacao.ChavePixValidator
 import keymanagergrpc.br.com.guilherme.validacao.ClientBcbValidator
 import keymanagergrpc.br.com.guilherme.validacao.ClientItauValidator
 import org.slf4j.LoggerFactory
@@ -28,21 +27,22 @@ open class DeletaChaveEndpoint(
     @InterceptAndValidate
     override fun exclui(request: ExcludeKeyRequest?, responseObserver: StreamObserver<Empty>?) {
 
-        val validator = ChavePixValidator()
-
         LOGGER.info("Buscando chave e cliente no database")
 
-        val chave = keyRepository.findByClientIdAndPixId(request!!.clientid, request.pixid)
+        val possibleChave = keyRepository.findByClientIdAndPixId(request!!.clientid, request.pixid)
 
-        if(chave == null) {
+        if(possibleChave.isEmpty) {
             LOGGER.error("Cliente não possuí chave pix do tipo")
-            throw ExistenciaDeChaveException("Cliente não possuí essa chave pix")
+            throw ExistenciaDeChaveException("PixId ou Cliente inválido")
         }
-        ClientItauValidator(clientItau).buscaPorContaETipoNoItau(chave.clientId, chave.tipoConta.toString())
-        ClientBcbValidator(clientBcb).deletaChaveNoBcb(chave)
+
+        val chave = possibleChave.get()
+
+        val respostaItau = ClientItauValidator(clientItau).buscaPorContaETipoNoItau(chave.clientId, chave.tipoConta.toString())
+        ClientBcbValidator(clientBcb).deletaChaveNoBcb(chave, "60701190")
         LOGGER.info("Deletando CHAVEPIX")
         keyRepository.deleteById(chave.pixId)
-        LOGGER.info("Chave pix deletada cpom sucesso")
+        LOGGER.info("Chave pix deletada com sucesso")
 
         responseObserver?.onNext(Empty.getDefaultInstance())
         responseObserver?.onCompleted()

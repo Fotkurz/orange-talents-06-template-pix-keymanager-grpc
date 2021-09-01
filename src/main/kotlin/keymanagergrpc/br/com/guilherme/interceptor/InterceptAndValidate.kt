@@ -1,4 +1,4 @@
-package keymanagergrpc.br.com.guilherme.handler
+package keymanagergrpc.br.com.guilherme.interceptor
 
 import io.micronaut.aop.Around
 

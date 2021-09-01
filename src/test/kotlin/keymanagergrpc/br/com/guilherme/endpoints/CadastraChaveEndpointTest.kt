@@ -154,7 +154,7 @@ internal class CadastraChaveEndpointTest() {
                 CreateRequest.newBuilder()
                     .setId("c56dfef4-7901-44fb-84e2-a2cefb157890")
                     .setAccountType(AccountType.CONTA_CORRENTE)
-                    .setKeyType(KeyType.CELULAR)
+                    .setKeyType(KeyType.PHONE)
                     .setChave("esseehumformatoinvalido")
                     .build()
             )
@@ -238,7 +238,7 @@ internal class CadastraChaveEndpointTest() {
         }
         assertNotNull(retornaErro)
         assertEquals(Status.PERMISSION_DENIED.code, retornaErro.status.code)
-        assertEquals("ID não encontrado", retornaErro.status.description)
+        assertEquals("Client inexistente no sistema do itau", retornaErro.status.description)
     }
 
     @Test
@@ -364,10 +364,7 @@ internal class CadastraChaveEndpointTest() {
         )
     }
 
-    fun mockaRequisicaoItauComSucesso(
-        clientId: String,
-        tipo: String
-    ): OngoingStubbing<HttpResponse<ItauResponseDto?>>? {
+    fun mockaRequisicaoItauComSucesso(clientId: String, tipo: String): OngoingStubbing<HttpResponse<ItauResponseDto?>>? {
         return `when`(clientItau.buscaContaETipo(clientId, tipo))
     }
 

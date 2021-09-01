@@ -37,6 +37,8 @@ data class ItauResponseDto(
 @Introspected
 data class Instituicao(val nome: String, val ispb: String) {
 
+
+
 }
 @Introspected
 data class Titular(val id: String, val nome: String, val cpf: String) {

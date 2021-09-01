@@ -3,8 +3,8 @@ package keymanagergrpc.br.com.guilherme.validacao
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import keymanagergrpc.br.com.guilherme.AccountType
 import keymanagergrpc.br.com.guilherme.KeyType
-import keymanagergrpc.br.com.guilherme.handler.ChaveDuplicadaException
-import keymanagergrpc.br.com.guilherme.handler.TipoChaveInvalidoException
+import keymanagergrpc.br.com.guilherme.interceptor.ChaveDuplicadaException
+import keymanagergrpc.br.com.guilherme.interceptor.TipoChaveInvalidoException
 import keymanagergrpc.br.com.guilherme.modelo.ChavePix
 import keymanagergrpc.br.com.guilherme.modelo.TipoChave
 import keymanagergrpc.br.com.guilherme.modelo.TipoConta
@@ -71,7 +71,7 @@ internal class ChavePixValidatorTest {
     @Test
     internal fun deveFalharAoValidarTipoCelularInvalido() {
         val resultado = assertThrows<TipoChaveInvalidoException> {
-            validator.validaTipoChave(KeyType.CELULAR, "chaveforadepadrao")
+            validator.validaTipoChave(KeyType.PHONE, "chaveforadepadrao")
         }
 
         assertEquals("CELULAR Inválido", resultado.message)

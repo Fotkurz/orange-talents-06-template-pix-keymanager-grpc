@@ -1,6 +1,7 @@
 package keymanagergrpc.br.com.guilherme.endpoints
 
 import io.grpc.ManagedChannel
+import io.grpc.Status
 import io.grpc.StatusRuntimeException
 import io.micronaut.context.annotation.Factory
 import io.micronaut.grpc.annotation.GrpcChannel
@@ -9,30 +10,27 @@ import io.micronaut.http.HttpResponse
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.annotation.MockBean
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
-import keymanagergrpc.br.com.guilherme.CreateKeyServiceGrpc
-import keymanagergrpc.br.com.guilherme.ExcludeKeyRequest
-import keymanagergrpc.br.com.guilherme.ExcludeKeyServiceGrpc
+import keymanagergrpc.br.com.guilherme.*
 import keymanagergrpc.br.com.guilherme.client.ClientBcb
 import keymanagergrpc.br.com.guilherme.client.ClientItau
-import keymanagergrpc.br.com.guilherme.client.dtos.*
-import keymanagergrpc.br.com.guilherme.modelo.ChavePix
 import keymanagergrpc.br.com.guilherme.modelo.TipoChave
 import keymanagergrpc.br.com.guilherme.modelo.TipoConta
 import keymanagergrpc.br.com.guilherme.repository.KeyRepository
+import keymanagergrpc.br.com.guilherme.service.TestBuildingService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito
-import org.mockito.stubbing.OngoingStubbing
-import java.time.LocalDateTime
-import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @MicronautTest(transactional = false)
 internal class DeletaChaveEndpointTest {
+
+    @Inject
+    lateinit var t: TestBuildingService
 
     @Inject
     lateinit var grpcClient: ExcludeKeyServiceGrpc.ExcludeKeyServiceBlockingStub
@@ -49,9 +47,29 @@ internal class DeletaChaveEndpointTest {
     @Inject
     lateinit var clientBcb: ClientBcb
 
+    private val uuid = "cb3a88ca-eb05-41f3-9871-b18ace28ee40"
+    private val chaveCpf = "12345678912"
+    private val tipoConta = TipoConta.CONTA_CORRENTE.toString()
+    private val tipoChave = TipoChave.CPF.toString()
+
     @BeforeEach
     internal fun setUp() {
         keyRepository.deleteAll()
+
+        t.mockaRequisicaoItau(clientId = uuid, tipoConta = tipoConta)!!
+            .thenReturn(HttpResponse.ok(t.createResponseParaItau(tipoConta = tipoConta)))
+
+        t.mockaCreateRequisicaoBcb(t.createPixRequestKeyParaBcb(key = chaveCpf, keyType = tipoChave))
+            ?.thenReturn(HttpResponse.created((t.createPixResponseKeyParaBcb(key = chaveCpf, keyType = tipoChave))))
+
+        grpcCadastra.registra(
+            CreateRequest.newBuilder()
+                .setId(uuid)
+                .setAccountType(AccountType.CONTA_CORRENTE)
+                .setKeyType(KeyType.CPF)
+                .setChave(chaveCpf)
+                .build()
+        )
     }
 
     /*
@@ -66,41 +84,17 @@ internal class DeletaChaveEndpointTest {
     @Test
     internal fun deveDeletarCorretamentePixidDoBanco() {
 
-        Mockito.`when`(clientItau.buscaContaETipo("1", "CONTA_CORRENTE"))
-            .thenReturn(
-                HttpResponse.ok(
-                    ItauResponseDto(
-                        tipo = "CONTA_CORRENTE",
-                        instituicao = Instituicao(nome = "ITAU", ispb = "1111"),
-                        titular = Titular(id = "1", nome = "Tolkien", cpf = "12345678912"),
-                        agencia = "0001",
-                        numero = "1212"
-                    )
-                )
-            )
+        t.mockaDeleteChaveBcb(
+            "12345678912",
+            t.createDeleteKeyPixRequest("12345678912"))?.thenReturn(HttpResponse.ok())
 
-        val chave = ChavePix(
-            tipoChave = TipoChave.CPF,
-            chave = "12345678912",
-            clientId = "1",
-            tipoConta = TipoConta.CONTA_CORRENTE
-        )
-
-        Mockito.`when`(clientBcb.deletaChave(key = chave.pixId))
-            .thenReturn(
-                HttpResponse.ok(mapOf(
-                    Pair("key", chave.pixId),
-                    Pair("participant", "1111")
-                ))
-            )
-
-        keyRepository.save(chave)
+        val chave = keyRepository.findByChave("12345678912")
 
         grpcClient.exclui(
             ExcludeKeyRequest
             .newBuilder()
-            .setPixid(chave.pixId)
-            .setClientid("1")
+            .setPixid(chave?.pixId)
+            .setClientid(uuid)
             .build()
         )
 
@@ -111,183 +105,92 @@ internal class DeletaChaveEndpointTest {
 
     @Test
     internal fun deveFalharAoTentarDeletarChavePixComClientIdInvalidoEChaveValida() {
-        val chave1 = ChavePix(
-            tipoChave = TipoChave.CPF,
-            chave = "12345678910",
-            clientId = "1",
-            tipoConta = TipoConta.CONTA_CORRENTE
-        )
 
-        keyRepository.save(chave1)
-
-        val keyBuscada = keyRepository.findByClientId("1")
-
-        val erro = assertThrows<StatusRuntimeException> {
-        grpcClient.exclui(ExcludeKeyRequest
-            .newBuilder()
-            .setPixid(keyBuscada[0].pixId.toString())
-            .setClientid("invalido")
-            .build())
-        }
-
-        val lista = keyRepository.findAll()
-
-        assertEquals(1, lista.count())
-        assertEquals("12345678910", lista.first().chave)
-    }
-
-    @Test
-    internal fun deveFalharAoTentarExcluirUmaChaveComPixIdInvalidoEClientIdValido() {
-        val chave1 = ChavePix(
-            tipoChave = TipoChave.CPF,
-            chave = "12345678910",
-            clientId = "1",
-            tipoConta = TipoConta.CONTA_CORRENTE
-        )
-
-        keyRepository.save(chave1)
-
-        val keyBuscada = keyRepository.findByClientId("1")
-
-        val erro = assertThrows<StatusRuntimeException> {
-            grpcClient.exclui(ExcludeKeyRequest
-                .newBuilder()
-                .setPixid(UUID.randomUUID().toString())
-                .setClientid("1")
-                .build())
-        }
-
-        val lista = keyRepository.findAll()
-
-        assertEquals(1, lista.count())
-        assertEquals("12345678910", lista.first().chave)
-    }
-
-    @Test
-    internal fun deveFalharAoTentarExcluirUmaChaveCujoClientIdNaoExistaNoItau() {
-
-        val chave = ChavePix(
-            tipoChave = TipoChave.CPF,
-            chave = "12345678912",
-            clientId = "1",
-            tipoConta = TipoConta.CONTA_CORRENTE
-        )
-
-        keyRepository.save(chave)
-
-        Mockito.`when`(clientItau.buscaContaETipo("1", "CONTA_CORRENTE"))
-            .thenThrow(HttpClientResponseException::class.java)
-
-        val error = assertThrows<StatusRuntimeException> {
-        grpcClient.exclui(ExcludeKeyRequest.newBuilder()
-            .setPixid(chave.pixId)
-            .setClientid("CONTA_CORRENTE")
-            .build()
-        )}
-
-        val lista = keyRepository.findAll()
-
-        assertTrue(lista.count() == 1)
-    }
-
-    @Test
-    internal fun deveFalharAoTentarDeletarChaveNaoCadastradaNoBcb() {
-        val chave = ChavePix(
-            tipoChave = TipoChave.CPF,
-            chave = "12345678912",
-            clientId = "1",
-            tipoConta = TipoConta.CONTA_CORRENTE
-        )
-
-        keyRepository.save(chave)
-
-        Mockito.`when`(clientBcb.deletaChave(key = chave.pixId))
-            .thenThrow(HttpClientResponseException::class.java)
-
-        Mockito.`when`(clientItau.buscaContaETipo("1", "CONTA_CORRENTE"))
-            .thenReturn(
-                HttpResponse.ok(
-                    ItauResponseDto(
-                        tipo = "CONTA_CORRENTE",
-                        instituicao = Instituicao(nome = "ITAU", ispb = "1111"),
-                        titular = Titular(id = "1", nome = "Tolkien", cpf = "12345678912"),
-                        agencia = "0001",
-                        numero = "1212"
-                    )
-                )
-            )
+        val chave = keyRepository.findByChave("12345678912")
 
         val error = assertThrows<StatusRuntimeException> {
             grpcClient.exclui(
                 ExcludeKeyRequest
                     .newBuilder()
-                    .setPixid(chave.pixId)
-                    .setClientid("1")
+                    .setPixid(chave?.pixId)
+                    .setClientid("clientidinvalido")
                     .build()
             )
         }
 
+        val lista = keyRepository.findAll()
+
+        assertEquals(Status.NOT_FOUND.code, error.status.code)
+        assertEquals("PixId ou Cliente inválido", error.status.description)
+
     }
 
-    fun criaPixResponseKeyParaBcb(chave: String, tipo: String): CreatePixKeyResponse {
-        return CreatePixKeyResponse(
-            keyType = tipo,
-            key = chave,
-            bankAccount = mapOf(
-                Pair("participant", "60701190"),
-                Pair("branch", "0001"),
-                Pair("accountNumber", "123456"),
-                Pair("accountType", "CACC")
-            ),
-            owner = mapOf(
-                Pair("type", "NATURAL_PERSON"),
-                Pair("name", "Tolkien"),
-                Pair("taxIdNumber", "12345678912")
-            ),
-            createdAt = LocalDateTime.now().toString()
-        )
-    }
+    @Test
+    internal fun deveFalharAoTentarExcluirUmaChaveComPixIdInvalidoEClientIdValido() {
 
-    fun criaResponseParaItau(tipo: String): ItauResponseDto {
-        return ItauResponseDto(
-            tipo = tipo,
-            instituicao = Instituicao(nome = "ITAU", ispb = "60701190"),
-            titular = Titular(id = "1", nome = "Tolkien", cpf = "12345678912"),
-            agencia = "0001",
-            numero = "123456"
-        )
-    }
-
-    fun criaPixRequestKeyParaBcb(key: String, keyType: String): CreatePixKeyRequest {
-        return CreatePixKeyRequest(
-            keyType = keyType,
-            key = key,
-            bankAccount = mapOf(
-                Pair("participant", "60701190"),
-                Pair("branch", "0001"),
-                Pair("accountNumber", "123456"),
-                Pair("accountType", "CACC")
-            ),
-            owner = mapOf(
-                Pair("type", "NATURAL_PERSON"),
-                Pair("name", "Tolkien"),
-                Pair("taxIdNumber", "12345678912")
+        val error = assertThrows<StatusRuntimeException> {
+            grpcClient.exclui(
+                ExcludeKeyRequest
+                    .newBuilder()
+                    .setPixid("pixidinvalido")
+                    .setClientid(uuid)
+                    .build()
             )
-        )
+        }
+
+        val lista = keyRepository.findAll()
+
+        assertEquals(Status.NOT_FOUND.code, error.status.code)
+        assertEquals("PixId ou Cliente inválido", error.status.description)
     }
 
-    fun mockaRequisicaoItauComSucesso(
-        clientId: String,
-        tipo: String
-    ): OngoingStubbing<HttpResponse<ItauResponseDto?>>? {
-        return Mockito.`when`(clientItau.buscaContaETipo(clientId, tipo))
+    @Test
+    internal fun deveFalharAoTentarExcluirUmaChaveCujoClientIdNaoExistaNoItau() {
+
+        t.mockaRequisicaoItau(uuid, "CONTA_CORRENTE")?.thenThrow(HttpClientResponseException::class.java)
+
+        val chave = keyRepository.findByChave(chaveCpf)
+
+        val error = assertThrows<StatusRuntimeException> {
+            grpcClient.exclui(
+                ExcludeKeyRequest
+                    .newBuilder()
+                    .setPixid(chave?.pixId)
+                    .setClientid(uuid)
+                    .build()
+            )
+        }
+
+        val lista = keyRepository.findAll()
+
+        assertEquals(Status.PERMISSION_DENIED.code, error.status.code)
+        assertEquals("Client inexistente no sistema do itau", error.status.description)
+
     }
 
-    fun mockaCreateRequisicaoBcb(requestBcb: CreatePixKeyRequest): OngoingStubbing<HttpResponse<CreatePixKeyResponse>>? {
-        return Mockito.`when`(clientBcb.cadastraChave(requestBcb))
-    }
-    fun mockaDeleteChaveBcb(key: String): OngoingStubbing<HttpResponse<Map<String, String>>>? {
-        return Mockito.`when`(clientBcb.deletaChave(key))
+    @Test
+    internal fun deveFalharAoTentarDeletarChaveNaoCadastradaNoBcb() {
+
+        t.mockaDeleteChaveBcb(key = chaveCpf, t.createDeleteKeyPixRequest(chaveCpf))
+            ?.thenThrow(HttpClientResponseException::class.java)
+
+        val chave = keyRepository.findByChave(chaveCpf)
+
+        val error = assertThrows<StatusRuntimeException> {
+            grpcClient.exclui(
+                ExcludeKeyRequest
+                    .newBuilder()
+                    .setPixid(chave?.pixId)
+                    .setClientid(uuid)
+                    .build()
+            )
+        }
+
+        val lista = keyRepository.findAll()
+
+        assertEquals(Status.INVALID_ARGUMENT.code, error.status.code)
+        assertEquals("Chave Pix não encontrada no sistema BCB", error.status.description)
+
     }
 
     @MockBean(ClientItau::class)

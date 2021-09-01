@@ -5,9 +5,9 @@ import io.grpc.StatusRuntimeException
 import keymanagergrpc.br.com.guilherme.AccountType
 import keymanagergrpc.br.com.guilherme.CreateRequest
 import keymanagergrpc.br.com.guilherme.KeyType
-import keymanagergrpc.br.com.guilherme.handler.ChaveDuplicadaException
-import keymanagergrpc.br.com.guilherme.handler.TipoChaveInvalidoException
-import keymanagergrpc.br.com.guilherme.handler.TipoContaInvalidoException
+import keymanagergrpc.br.com.guilherme.interceptor.ChaveDuplicadaException
+import keymanagergrpc.br.com.guilherme.interceptor.TipoChaveInvalidoException
+import keymanagergrpc.br.com.guilherme.interceptor.TipoContaInvalidoException
 import keymanagergrpc.br.com.guilherme.modelo.TipoChave
 import keymanagergrpc.br.com.guilherme.repository.KeyRepository
 import org.slf4j.LoggerFactory
@@ -74,7 +74,7 @@ class ChavePixValidator {
                     throw TipoChaveInvalidoException("CPF Inválido")
                 }
             }
-            KeyType.CELULAR -> {
+            KeyType.PHONE -> {
                 if(!celularValido(chave)) {
                     throw TipoChaveInvalidoException("CELULAR Inválido")
                 }

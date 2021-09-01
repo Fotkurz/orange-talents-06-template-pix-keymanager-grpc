@@ -29,4 +29,10 @@ data class ChavePix(
 
     @Id
     var pixId: String = UUID.randomUUID().toString()
+
+    override fun toString(): String {
+        return "ChavePix(tipoChave=$tipoChave, chave=$chave, clientId='$clientId', tipoConta=$tipoConta, pixId='$pixId')"
+    }
+
+
 }
